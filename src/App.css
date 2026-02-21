@@ -1,0 +1,77 @@
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  padding: 1rem 0;
+  border-right: 1px solid #333;
+  background: #1a1a1a;
+}
+
+.sidebar-title {
+  padding: 0 1rem 1rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #333;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-menu li {
+  margin: 0;
+}
+
+.sidebar-menu button {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  background: none;
+  color: #ccc;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sidebar-menu button:hover {
+  background: #252525;
+  color: #fff;
+}
+
+.sidebar-menu button.active {
+  background: #333;
+  color: #fff;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+}
+
+@media (prefers-color-scheme: light) {
+  .sidebar {
+    background: #f5f5f5;
+    border-right-color: #ddd;
+  }
+  .sidebar-title {
+    border-bottom-color: #ddd;
+  }
+  .sidebar-menu button {
+    color: #333;
+  }
+  .sidebar-menu button:hover {
+    background: #eee;
+    color: #000;
+  }
+  .sidebar-menu button.active {
+    background: #e0e0e0;
+    color: #000;
+  }
+}
