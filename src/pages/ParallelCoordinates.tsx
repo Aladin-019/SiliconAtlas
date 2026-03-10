@@ -87,7 +87,6 @@ function ParallelCoordinates() {
         .nice()
     })
 
-    // Vertical axes
     labels.forEach((label) => {
       const x = xScale(label) ?? 0
       g.append('line')
@@ -99,7 +98,6 @@ function ParallelCoordinates() {
         .attr('stroke-width', 1)
     })
 
-    // Axis labels
     labels.forEach((label) => {
       const x = xScale(label) ?? 0
       g.append('text')
@@ -113,7 +111,6 @@ function ParallelCoordinates() {
 
     const color = d3.scaleOrdinal(d3.schemeCategory10)
 
-    // One path per CPU
     const pathGroup = g.append('g').attr('class', 'paths')
 
     pathGroup
@@ -121,10 +118,7 @@ function ParallelCoordinates() {
       .data(cpus)
       .join('path')
       .attr('d', (cpu) => {
-        const points = DIMENSIONS.map((d) => ({
-          key: d.key,
-          label: d.label,
-        }))
+        const points = DIMENSIONS.map((d) => ({ key: d.key, label: d.label }))
         return d3
           .line<{ key: DimKey; label: string }>()
           .x((p) => xScale(p.label) ?? 0)
@@ -132,11 +126,10 @@ function ParallelCoordinates() {
           .defined(() => true)(points) ?? ''
       })
       .attr('fill', 'none')
-      .attr('stroke', (_cpu, i) => color(String(i)))
+      .attr('stroke', (_, i) => color(String(i)))
       .attr('stroke-width', 2)
       .attr('stroke-opacity', 0.9)
 
-    // Legend: CPU model names
     const legend = g
       .append('g')
       .attr('class', 'legend')

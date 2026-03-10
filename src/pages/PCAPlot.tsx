@@ -100,11 +100,9 @@ function PCAPlot() {
       .attr('text-anchor', 'middle')
       .attr('fill', '#999')
       .attr('font-size', 11)
-      .text(
-        `PC1 (${(variance[0] * 100).toFixed(1)}% var)`
-      )
+      .text(`PC1 (${(variance[0] * 100).toFixed(1)}% var)`)
     g.append('text')
-      .attr('transform', `rotate(-90)`)
+      .attr('transform', 'rotate(-90)')
       .attr('x', -innerHeight / 2)
       .attr('y', -36)
       .attr('text-anchor', 'middle')
