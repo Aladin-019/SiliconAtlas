@@ -1,25 +1,56 @@
-const { initDb } = require('./db')
-const https = require('https')
+import { initDb } from './db'
+import https from 'https'
+import type { IncomingMessage } from 'http'
 
 const API_BASE = 'https://computespecsdb.com'
 
-function fetchJson(url) {
+function fetchJson(url: string): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
-      let data = ''
-      res.on('data', (chunk) => { data += chunk })
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(data))
-        } catch (e) {
-          reject(e)
-        }
+    https
+      .get(url, (res: IncomingMessage) => {
+        let data = ''
+        res.on('data', (chunk: Buffer | string) => {
+          data += chunk
+        })
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data))
+          } catch (e) {
+            reject(e)
+          }
+        })
       })
-    }).on('error', reject)
+      .on('error', reject)
   })
 }
 
-function adaptCpu(raw) {
+interface RawCpu {
+  id: number
+  cpu_model_name: string
+  family: string
+  cpu_model: string
+  codename: string
+  cores: number
+  threads: number
+  max_turbo_frequency_ghz: number
+  l3_cache_mb: number
+  tdp_watts: number
+  launch_year: number
+  max_memory_tb: number
+}
+
+interface RawGpu {
+  id: number
+  gpu_model_name: string
+  vendor: string
+  gpu_model: string
+  form_factor?: string | null
+  memory_gb?: number | null
+  memory_type?: string | null
+  tdp_watts?: number | null
+}
+
+function adaptCpu(raw: RawCpu) {
   return {
     source_id: raw.id,
     model_name: raw.cpu_model_name,
@@ -36,7 +67,7 @@ function adaptCpu(raw) {
   }
 }
 
-function adaptGpu(raw) {
+function adaptGpu(raw: RawGpu) {
   return {
     source_id: raw.id,
     model_name: raw.gpu_model_name,
@@ -62,16 +93,16 @@ async function seed() {
   `)
 
   console.log('Fetching CPUs...')
-  const cpus = await fetchJson(`${API_BASE}/api/cpus`)
-  const insertManyCpus = db.transaction((rows) => {
+  const cpus = (await fetchJson(`${API_BASE}/api/cpus`)) as RawCpu[]
+  const insertManyCpus = db.transaction((rows: ReturnType<typeof adaptCpu>[]) => {
     for (const row of rows) insertProcessor.run(row)
   })
   insertManyCpus(cpus.map(adaptCpu))
   console.log(`Inserted ${cpus.length} processors.`)
 
   console.log('Fetching GPUs...')
-  const gpus = await fetchJson(`${API_BASE}/api/gpus`)
-  const insertManyGpus = db.transaction((rows) => {
+  const gpus = (await fetchJson(`${API_BASE}/api/gpus`)) as RawGpu[]
+  const insertManyGpus = db.transaction((rows: ReturnType<typeof adaptGpu>[]) => {
     for (const row of rows) insertGpu.run(row)
   })
   insertManyGpus(gpus.map(adaptGpu))

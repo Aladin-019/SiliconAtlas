@@ -1,6 +1,6 @@
 # SiliconAtlas API (server)
 
-SQLite database and Express API. Frontend will use this for "top N newest" and search.
+TypeScript + Express + SQLite. The frontend proxies `/api` to this server for processors (and later search).
 
 ## Setup
 
@@ -9,18 +9,26 @@ cd server
 npm install
 ```
 
-## Init DB and seed
+From project root, install dev deps so server TypeScript is type-checked:
 
-- **Init DB** (creates `data/siliconatlas.db` and tables):  
-  `npm run init-db`
+```bash
+npm install
+```
 
-- **Seed** (fetches CPUs/GPUs from Compute Specs DB and inserts):  
-  `npm run seed`
+## Seed the DB
+
+Fetches CPUs/GPUs from Compute Specs DB and writes to `server/data/siliconatlas.db` (creates DB and tables if needed):
+
+```bash
+cd server
+npm run seed
+```
 
 ## Run server
 
 ```bash
+cd server
 npm start
 ```
 
-Runs at http://localhost:3001. Right now only `GET /api/health` exists. Next steps: add routes for top N and search, then point the frontend proxy at this server.
+Runs at http://localhost:3001. Endpoints: `GET /api/health`, `GET /api/processors?limit=N`.
