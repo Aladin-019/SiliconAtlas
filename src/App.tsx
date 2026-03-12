@@ -2,9 +2,10 @@ import { useState } from 'react'
 import HomePage from './pages/HomePage'
 import ParallelCoordinates from './pages/ParallelCoordinates'
 import PCAPlot from './pages/PCAPlot'
+import HardwareLookup from './pages/HardwareLookup'
 import './App.css'
 
-type View = 'home' | 'parallel-coordinates' | 'pca'
+type View = 'home' | 'parallel-coordinates' | 'pca' | 'lookup'
 
 function App() {
   const [view, setView] = useState<View>('home')
@@ -41,12 +42,22 @@ function App() {
               PCA Plot
             </button>
           </li>
+          <li>
+            <button
+              type="button"
+              className={view === 'lookup' ? 'active' : ''}
+              onClick={() => setView('lookup')}
+            >
+              Hardware Lookup
+            </button>
+          </li>
         </ul>
       </nav>
       <main className="main-content">
         {view === 'home' && <HomePage />}
         {view === 'parallel-coordinates' && <ParallelCoordinates />}
         {view === 'pca' && <PCAPlot />}
+        {view === 'lookup' && <HardwareLookup />}
       </main>
     </div>
   )
