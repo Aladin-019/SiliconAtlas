@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 import { fetchTopNCpus } from '../data/cpuData'
+import { searchProcessors } from '../data/searchApi'
 import type { CpuSpec } from '../types/cpu'
 
 const MARGIN = { top: 28, right: 24, bottom: 24, left: 24 }
@@ -20,6 +21,9 @@ function ParallelCoordinates() {
   const [cpus, setCpus] = useState<CpuSpec[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<CpuSpec[]>([])
+  const [searching, setSearching] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -41,6 +45,27 @@ function ParallelCoordinates() {
       cancelled = true
     }
   }, [])
+
+  async function handleSearch() {
+    setSearching(true)
+    setSearchResults([])
+    try {
+      const results = await searchProcessors(searchQuery, 20)
+      setSearchResults(results)
+    } catch {
+      setSearchResults([])
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  function addToPlot(cpu: CpuSpec) {
+    setCpus((prev) => (prev.some((c) => c.id === cpu.id) ? prev : [...prev, cpu]))
+  }
+
+  function removeFromPlot(id: number) {
+    setCpus((prev) => prev.filter((c) => c.id !== id))
+  }
 
   useEffect(() => {
     const container = containerRef.current
@@ -166,6 +191,82 @@ function ParallelCoordinates() {
       <h1>Parallel Coordinates</h1>
       {loading && <p>Loading CPU data…</p>}
       {error && <p style={{ color: '#e88' }}>Error: {error}</p>}
+
+      <section style={{ marginBottom: 16 }}>
+        <h2 style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Add processor to plot</h2>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="search"
+            placeholder="Search by name (e.g. Ryzen, Intel)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            style={{ padding: '6px 10px', minWidth: 200 }}
+          />
+          <button type="button" onClick={handleSearch} disabled={searching}>
+            {searching ? 'Searching…' : 'Search'}
+          </button>
+        </div>
+        {searchResults.length > 0 && (
+          <ul style={{ listStyle: 'none', padding: 0, marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {searchResults.map((p) => (
+              <li key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ flex: 1, fontSize: 13 }}>{p.cpu_model_name}</span>
+                <button
+                  type="button"
+                  onClick={() => addToPlot(p)}
+                  disabled={cpus.some((c) => c.id === p.id)}
+                  style={{ fontSize: 12, padding: '2px 8px' }}
+                >
+                  {cpus.some((c) => c.id === p.id) ? 'In plot' : 'Add'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {cpus.length > 0 && (
+        <section style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <h2 style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>In plot ({cpus.length})</h2>
+            <button
+              type="button"
+              onClick={() => fetchTopNCpus(10).then(setCpus)}
+              style={{ fontSize: 12, padding: '2px 8px' }}
+            >
+              Reset to top 10
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {cpus.map((p) => (
+              <span
+                key={p.id}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '2px 8px',
+                  background: '#333',
+                  borderRadius: 4,
+                  fontSize: 12,
+                }}
+              >
+                {p.cpu_model}
+                <button
+                  type="button"
+                  onClick={() => removeFromPlot(p.id)}
+                  aria-label={`Remove ${p.cpu_model_name}`}
+                  style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div ref={containerRef} style={{ width: '100%' }} />
     </div>
   )
