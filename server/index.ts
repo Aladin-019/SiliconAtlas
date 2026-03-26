@@ -2,7 +2,6 @@ import express from 'express'
 import cors from 'cors'
 import { initDb } from './db'
 
-/** Same shape as frontend CpuSpec (API response). */
 interface CpuSpec {
   id: number
   cpu_model_name: string
@@ -18,7 +17,6 @@ interface CpuSpec {
   max_memory_tb: number
 }
 
-/** Same shape as frontend GpuSpec (API response). */
 interface GpuSpec {
   id?: number
   source_id?: number

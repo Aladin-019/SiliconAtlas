@@ -7,10 +7,10 @@ import type { CpuSpec } from '../types/cpu'
 const MARGIN = { top: 28, right: 24, bottom: 24, left: 24 }
 
 const DIMENSIONS = [
-  { key: 'cores', label: 'Cores' },
-  { key: 'threads', label: 'Threads' },
+  { key: 'cores', label: 'Cores (#)' },
+  { key: 'threads', label: 'Threads (#)' },
   { key: 'max_turbo_frequency_ghz', label: 'Freq (GHz)' },
-  { key: 'l3_cache_mb', label: 'L3 (MB)' },
+  { key: 'l3_cache_mb', label: 'L3 Cache (MB)' },
   { key: 'tdp_watts', label: 'TDP (W)' },
 ] as const
 
@@ -72,9 +72,12 @@ function ParallelCoordinates() {
     if (!container || cpus.length === 0) return
 
     const width = container.clientWidth
-    const height = 400
+    const plotHeight = 500
+    const legendItemHeight = 18
+    const legendHeight = Math.max(0, cpus.length * legendItemHeight + 8)
+    const height = plotHeight + legendHeight
     const innerWidth = width - MARGIN.left - MARGIN.right
-    const innerHeight = height - MARGIN.top - MARGIN.bottom
+    const innerHeight = plotHeight - MARGIN.top - MARGIN.bottom
 
     d3.select(container).selectAll('svg').remove()
 
@@ -112,15 +115,25 @@ function ParallelCoordinates() {
         .nice()
     })
 
-    labels.forEach((label) => {
+    labels.forEach((label, index) => {
       const x = xScale(label) ?? 0
       g.append('line')
         .attr('x1', x)
         .attr('x2', x)
         .attr('y1', 0)
         .attr('y2', innerHeight)
-        .attr('stroke', '#555')
-        .attr('stroke-width', 1)
+        .attr('stroke', '#222')
+        .attr('stroke-width', 1.2)
+
+      const key = DIMENSIONS[index].key
+      const axis = d3.axisLeft(yScales[key]).ticks(5).tickSize(3)
+      g.append('g')
+        .attr('transform', `translate(${x},0)`)
+        .attr('color', '#222')
+        .call(axis)
+        .call((sel) => sel.selectAll('text').attr('fill', '#222').attr('font-size', 11))
+        .call((sel) => sel.selectAll('path').attr('stroke', 'none'))
+        .call((sel) => sel.selectAll('line').attr('stroke', '#222'))
     })
 
     labels.forEach((label) => {
@@ -129,8 +142,8 @@ function ParallelCoordinates() {
         .attr('x', x)
         .attr('y', -10)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#ccc')
-        .attr('font-size', 11)
+        .attr('fill', '#222')
+        .attr('font-size', 13)
         .text(label)
     })
 
@@ -163,7 +176,7 @@ function ParallelCoordinates() {
     cpus.forEach((cpu, i) => {
       const item = legend
         .append('g')
-        .attr('transform', `translate(${i * (innerWidth / cpus.length)}, 0)`)
+        .attr('transform', `translate(0, ${i * legendItemHeight})`)
       item
         .append('line')
         .attr('x1', 0)
@@ -176,9 +189,9 @@ function ParallelCoordinates() {
         .append('text')
         .attr('x', 16)
         .attr('y', 4)
-        .attr('fill', '#ccc')
-        .attr('font-size', 10)
-        .text(cpu.cpu_model)
+        .attr('fill', '#222')
+        .attr('font-size', 12)
+        .text(cpu.cpu_model_name)
     })
 
     return () => {
@@ -190,10 +203,10 @@ function ParallelCoordinates() {
     <div>
       <h1>Parallel Coordinates</h1>
       {loading && <p>Loading CPU data…</p>}
-      {error && <p style={{ color: '#e88' }}>Error: {error}</p>}
+      {error && <p style={{ color: '#8b3a2b' }}>Error: {error}</p>}
 
       <section style={{ marginBottom: 16 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Add processor to plot</h2>
+        <h2>Add processor to plot</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <input
             type="search"
@@ -229,7 +242,7 @@ function ParallelCoordinates() {
       {cpus.length > 0 && (
         <section style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <h2 style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>In plot ({cpus.length})</h2>
+            <h2 style={{ margin: 0, flex: '0 0 auto' }}>In plot ({cpus.length})</h2>
             <button
               type="button"
               onClick={() => fetchTopNCpus(10).then(setCpus)}
@@ -247,9 +260,11 @@ function ParallelCoordinates() {
                   alignItems: 'center',
                   gap: 4,
                   padding: '2px 8px',
-                  background: '#333',
+                  background: '#ddd2c0',
+                  border: '1px solid #8f7f68',
                   borderRadius: 4,
                   fontSize: 12,
+                  color: '#2a1f12',
                 }}
               >
                 {p.cpu_model}
@@ -257,7 +272,7 @@ function ParallelCoordinates() {
                   type="button"
                   onClick={() => removeFromPlot(p.id)}
                   aria-label={`Remove ${p.cpu_model_name}`}
-                  style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}
+                  style={{ background: 'none', border: 'none', color: '#5a4a36', cursor: 'pointer', padding: 0, fontSize: 14, lineHeight: 1 }}
                 >
                   ×
                 </button>

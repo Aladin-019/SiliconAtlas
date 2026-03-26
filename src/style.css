@@ -1,14 +1,37 @@
 :root {
-  font-family: system-ui, sans-serif;
+  font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.5;
+  color: #2f2518;
+  background: #e5ddcf;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  background: #e5ddcf;
+  color: #2f2518;
 }
 
 #app {
   width: 100%;
   min-height: 100vh;
+}
+
+button {
+  background: #d8cfbf;
+  color: #2f2518;
+  border: 1px solid #8f7f68;
+  border-radius: 4px;
+}
+
+button:hover {
+  background: #cfc4b1;
+}
+
+input,
+select {
+  background: #f2ecdf;
+  color: #2f2518;
+  border: 1px solid #8f7f68;
+  border-radius: 4px;
 }

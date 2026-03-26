@@ -34,9 +34,9 @@ function HardwareLookup() {
   }
 
   return (
-    <div style={{ color: '#e0e0e0', minHeight: '100%' }}>
-      <h1 style={{ color: 'inherit', margin: 0 }}>Hardware Lookup</h1>
-      <p style={{ color: '#aaa', marginTop: 8 }}>Search CPUs and GPUs from the database by name.</p>
+    <div style={{ color: '#2f2518', minHeight: '100%' }}>
+      <h1>Hardware Lookup</h1>
+      <p>Search CPUs and GPUs from the database by name.</p>
 
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
         <input
@@ -61,27 +61,27 @@ function HardwareLookup() {
         </button>
       </div>
 
-      {error && <p style={{ color: '#e88' }}>Error: {error}</p>}
+      {error && <p style={{ color: '#8b3a2b' }}>Error: {error}</p>}
 
       {!loading && (processors.length > 0 || gpus.length > 0) && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {processors.length > 0 && (tab === 'all' || tab === 'cpus') && (
             <section>
-              <h2 style={{ color: 'inherit', marginBottom: 12 }}>CPUs ({processors.length})</h2>
+              <h2>CPUs ({processors.length})</h2>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                 {processors.map((p) => (
                   <li
                     key={p.id}
                     style={{
-                      border: '1px solid #444',
+                      border: '1px solid #8f7f68',
                       borderRadius: 8,
                       padding: 12,
                       marginBottom: 8,
-                      background: '#222',
+                      background: '#ddd2c0',
                     }}
                   >
-                    <strong style={{ color: '#fff' }}>{p.cpu_model_name}</strong>
-                    <div style={{ fontSize: 13, color: '#aaa', marginTop: 6 }}>
+                    <strong style={{ color: '#2a1f12' }}>{p.cpu_model_name}</strong>
+                    <div style={{ fontSize: 13, color: '#5a4a36', marginTop: 6 }}>
                       Family: {p.family} · Model: {p.cpu_model} · Codename: {p.codename}
                       <br />
                       Cores: {p.cores} · Threads: {p.threads} · Boost: {p.max_turbo_frequency_ghz} GHz · L3: {p.l3_cache_mb} MB · TDP: {p.tdp_watts} W · Launch: {p.launch_year} · Max memory: {p.max_memory_tb} TB
@@ -94,21 +94,21 @@ function HardwareLookup() {
 
           {gpus.length > 0 && (tab === 'all' || tab === 'gpus') && (
             <section>
-              <h2 style={{ color: 'inherit', marginBottom: 12 }}>GPUs ({gpus.length})</h2>
+              <h2>GPUs ({gpus.length})</h2>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                 {gpus.map((g, i) => (
                   <li
                     key={g.id ?? g.model_name + i}
                     style={{
-                      border: '1px solid #444',
+                      border: '1px solid #8f7f68',
                       borderRadius: 8,
                       padding: 12,
                       marginBottom: 8,
-                      background: '#222',
+                      background: '#ddd2c0',
                     }}
                   >
-                    <strong style={{ color: '#fff' }}>{g.model_name}</strong>
-                    <div style={{ fontSize: 13, color: '#aaa', marginTop: 6 }}>
+                    <strong style={{ color: '#2a1f12' }}>{g.model_name}</strong>
+                    <div style={{ fontSize: 13, color: '#5a4a36', marginTop: 6 }}>
                       Vendor: {g.vendor} · Model: {g.model}
                       {g.form_factor != null && ` · Form: ${g.form_factor}`}
                       {g.memory_gb != null && ` · Memory: ${g.memory_gb} GB`}
@@ -124,7 +124,7 @@ function HardwareLookup() {
       )}
 
       {!loading && !error && query && processors.length === 0 && gpus.length === 0 && (
-        <p style={{ color: '#888' }}>No results. Try a different search or run without a query to list recent items.</p>
+        <p style={{ color: '#6f5e49' }}>No results. Try a different search or run without a query to list recent items.</p>
       )}
     </div>
   )

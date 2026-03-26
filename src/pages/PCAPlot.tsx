@@ -91,23 +91,29 @@ function PCAPlot() {
     g.append('g')
       .attr('transform', `translate(0,${innerHeight})`)
       .call(d3.axisBottom(xScale))
-      .attr('color', '#888')
-    g.append('g').call(d3.axisLeft(yScale)).attr('color', '#888')
+      .call((sel) => sel.selectAll('text').attr('fill', '#222').attr('font-size', 11))
+      .call((sel) => sel.selectAll('line').attr('stroke', '#222'))
+      .call((sel) => sel.select('path').attr('stroke', '#222'))
+    g.append('g')
+      .call(d3.axisLeft(yScale))
+      .call((sel) => sel.selectAll('text').attr('fill', '#222').attr('font-size', 11))
+      .call((sel) => sel.selectAll('line').attr('stroke', '#222'))
+      .call((sel) => sel.select('path').attr('stroke', '#222'))
 
     g.append('text')
       .attr('x', innerWidth / 2)
       .attr('y', innerHeight + 32)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#999')
-      .attr('font-size', 11)
+      .attr('fill', '#222')
+      .attr('font-size', 13)
       .text(`PC1 (${(variance[0] * 100).toFixed(1)}% var)`)
     g.append('text')
       .attr('transform', 'rotate(-90)')
       .attr('x', -innerHeight / 2)
       .attr('y', -36)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#999')
-      .attr('font-size', 11)
+      .attr('fill', '#222')
+      .attr('font-size', 13)
       .text(`PC2 (${(variance[1] * 100).toFixed(1)}% var)`)
 
     const color = d3.scaleOrdinal(d3.schemeCategory10)
@@ -130,9 +136,9 @@ function PCAPlot() {
       .attr('y', (d) => yScale(d.pc2))
       .attr('dx', 8)
       .attr('dy', 4)
-      .attr('fill', '#ccc')
-      .attr('font-size', 10)
-      .text((d) => d.cpu.cpu_model)
+      .attr('fill', '#222')
+      .attr('font-size', 12)
+      .text((d) => `${d.cpu.cpu_model_name} (ID: ${d.cpu.id})`)
 
     return () => {
       d3.select(container).selectAll('svg').remove()
@@ -144,7 +150,7 @@ function PCAPlot() {
       <h1>PCA Plot</h1>
       <p>Top {N} CPUs — first two principal components from cores, threads, freq, L3, TDP.</p>
       {loading && <p>Loading CPU data…</p>}
-      {error && <p style={{ color: '#e88' }}>Error: {error}</p>}
+      {error && <p style={{ color: '#8b3a2b' }}>Error: {error}</p>}
       <div ref={containerRef} style={{ width: '100%' }} />
     </div>
   )
