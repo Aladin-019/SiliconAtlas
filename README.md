@@ -1,4 +1,4 @@
-**SiliconAtlas** — Compare computer hardware with real data and D3 visualizations (parallel coordinates, PCA, etc)
+**SiliconAtlas** — Compare computer hardware with real data and D3 visualizations (parallel coordinates, PCA, etc) across CPUs and GPUs.
 
 **Stack:** TypeScript, React, Vite, D3. Backend: Express, SQLite (`server/`).
 

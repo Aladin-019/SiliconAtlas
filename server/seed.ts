@@ -1,4 +1,4 @@
-import { initDb } from './db'
+import { initDb } from './db.js'
 import https from 'https'
 import type { IncomingMessage } from 'http'
 
