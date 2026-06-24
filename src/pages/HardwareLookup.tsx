@@ -19,8 +19,8 @@ function HardwareLookup() {
     try {
       const limit = 30
       const [cpuRes, gpuRes] = await Promise.all([
-        tab === 'gpus' ? Promise.resolve([]) : searchProcessors(query, limit),
-        tab === 'cpus' ? Promise.resolve([]) : searchGpus(query, limit),
+        tab === 'all' || tab === 'cpus' ? searchProcessors(query, limit) : Promise.resolve([]),
+        tab === 'all' || tab === 'gpus' ? searchGpus(query, limit) : Promise.resolve([]),
       ])
       setProcessors(cpuRes)
       setGpus(gpuRes)
@@ -65,7 +65,7 @@ function HardwareLookup() {
 
       {!loading && (processors.length > 0 || gpus.length > 0) && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {processors.length > 0 && (tab === 'all' || tab === 'cpus') && (
+          {processors.length > 0 && tab === 'cpus' && (
             <section>
               <h2>CPUs ({processors.length})</h2>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -92,7 +92,7 @@ function HardwareLookup() {
             </section>
           )}
 
-          {gpus.length > 0 && (tab === 'all' || tab === 'gpus') && (
+          {gpus.length > 0 && tab === 'gpus' && (
             <section>
               <h2>GPUs ({gpus.length})</h2>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -119,7 +119,58 @@ function HardwareLookup() {
                 ))}
               </ul>
             </section>
-          )}
+            )}
+
+            {(processors.length > 0 || gpus.length > 0) && tab === 'all' && (
+            <section>
+              <h2>CPUs ({processors.length})</h2>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {processors.map((p) => (
+                  <li
+                    key={p.id}
+                    style={{
+                      border: '1px solid #8f7f68',
+                      borderRadius: 8,
+                      padding: 12,
+                      marginBottom: 8,
+                      background: '#ddd2c0',
+                    }}
+                  >
+                    <strong style={{ color: '#2a1f12' }}>{p.cpu_model_name}</strong>
+                    <div style={{ fontSize: 13, color: '#5a4a36', marginTop: 6 }}>
+                      Family: {p.family} · Model: {p.cpu_model} · Codename: {p.codename}
+                      <br />
+                      Cores: {p.cores} · Threads: {p.threads} · Boost: {p.max_turbo_frequency_ghz} GHz · L3: {p.l3_cache_mb} MB · TDP: {p.tdp_watts} W · Launch: {p.launch_year} · Max memory: {p.max_memory_tb} TB
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <h3>GPUs ({gpus.length})</h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {gpus.map((g, i) => (
+                  <li
+                    key={g.id ?? g.model_name + i}
+                    style={{
+                      border: '1px solid #8f7f68',
+                      borderRadius: 8,
+                      padding: 12,
+                      marginBottom: 8,
+                      background: '#ddd2c0',
+                    }}
+                  >
+                    <strong style={{ color: '#2a1f12' }}>{g.model_name}</strong>
+                    <div style={{ fontSize: 13, color: '#5a4a36', marginTop: 6 }}>
+                      Vendor: {g.vendor} · Model: {g.model}
+                      {g.form_factor != null && ` · Form: ${g.form_factor}`}
+                      {g.memory_gb != null && ` · Memory: ${g.memory_gb} GB`}
+                      {g.memory_type != null && ` (${g.memory_type})`}
+                      {g.tdp_watts != null && ` · TDP: ${g.tdp_watts} W`}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            )}
         </div>
       )}
 
