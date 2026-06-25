@@ -7,9 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:ui": "vitest --ui"
+    "test": "vitest --config vitest.frontend.config.ts",
+    "test:run": "vitest run --config vitest.frontend.config.ts",
+    "test:ui": "vitest --ui --config vitest.frontend.config.ts"
   },
   "dependencies": {
     "d3": "^7.9.0",
@@ -24,11 +24,11 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "~5.9.3",
-    "vite": "^7.3.1",
-    "vitest": "latest",
     "@testing-library/react": "latest",
     "@testing-library/jest-dom": "latest",
     "@testing-library/user-event": "latest",
-    "@vitest/coverage-v8": "latest"
+    "@vitest/coverage-v8": "latest",
+    "vite": "^7.3.1",
+    "vitest": "latest"
   }
 }
