@@ -1,12 +1,17 @@
 import { initDb } from './db.js'
 import https from 'https'
 import type { IncomingMessage } from 'http'
+import { pathToFileURL } from 'url'
 
-const API_BASE = 'https://computespecsdb.com'
+export const API_BASE = 'https://computespecsdb.com'
 
-function fetchJson(url: string): Promise<unknown> {
+type HttpGetClient = {
+  get: (url: string, cb: (res: IncomingMessage) => void) => { on: (event: 'error', handler: (err: Error) => void) => unknown }
+}
+
+export function fetchJson(url: string, client: HttpGetClient = https): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    https
+    client
       .get(url, (res: IncomingMessage) => {
         let data = ''
         res.on('data', (chunk: Buffer | string) => {
@@ -24,7 +29,7 @@ function fetchJson(url: string): Promise<unknown> {
   })
 }
 
-interface RawCpu {
+export interface RawCpu {
   id: number
   cpu_model_name: string
   family: string
@@ -39,7 +44,7 @@ interface RawCpu {
   max_memory_tb: number
 }
 
-interface RawGpu {
+export interface RawGpu {
   id: number
   gpu_model_name: string
   vendor: string
@@ -50,7 +55,7 @@ interface RawGpu {
   tdp_watts?: number | null
 }
 
-function adaptCpu(raw: RawCpu) {
+export function adaptCpu(raw: RawCpu) {
   return {
     source_id: raw.id,
     model_name: raw.cpu_model_name,
@@ -67,7 +72,7 @@ function adaptCpu(raw: RawCpu) {
   }
 }
 
-function adaptGpu(raw: RawGpu) {
+export function adaptGpu(raw: RawGpu) {
   return {
     source_id: raw.id,
     model_name: raw.gpu_model_name,
@@ -80,7 +85,7 @@ function adaptGpu(raw: RawGpu) {
   }
 }
 
-async function seed() {
+export async function seed() {
   const db = initDb()
 
   const insertProcessor = db.prepare(`
@@ -112,7 +117,11 @@ async function seed() {
   console.log('Seed done.')
 }
 
-seed().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
+const isDirectRun = !!process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
+
+if (isDirectRun) {
+  seed().catch((err) => {
+    console.error(err)
+    process.exit(1)
+  })
+}
