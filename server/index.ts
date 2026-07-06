@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import { initDb } from './db.js'
+import { pathToFileURL } from 'url'
 
 interface CpuSpec {
   id: number
@@ -63,7 +64,15 @@ app.use(express.json())
 
 const db = initDb()
 
-function rowToCpuSpec(row: ProcessorRow): CpuSpec {
+export function parseSearchQuery(rawQuery: unknown): string {
+  return String(rawQuery ?? '').trim()
+}
+
+export function parseLimit(rawLimit: unknown): number {
+  return Math.min(parseInt(String(rawLimit), 10) || 50, 100)
+}
+
+export function rowToCpuSpec(row: ProcessorRow): CpuSpec {
   return {
     id: row.source_id ?? row.id ?? 0,
     cpu_model_name: row.model_name,
@@ -80,7 +89,7 @@ function rowToCpuSpec(row: ProcessorRow): CpuSpec {
   }
 }
 
-function rowToGpuSpec(row: GpuRow): GpuSpec {
+export function rowToGpuSpec(row: GpuRow): GpuSpec {
   return {
     id: row.source_id ?? row.id,
     source_id: row.source_id ?? undefined,
@@ -99,8 +108,8 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.get('/api/processors', (req, res) => {
-  const q = String(req.query.q ?? '').trim()
-  const limit = Math.min(parseInt(String(req.query.limit), 10) || 50, 100)
+  const q = parseSearchQuery(req.query.q)
+  const limit = parseLimit(req.query.limit)
   let rows: ProcessorRow[]
   if (q) {
     const stmt = db.prepare(
@@ -127,8 +136,8 @@ app.get('/api/processors', (req, res) => {
 })
 
 app.get('/api/gpus', (req, res) => {
-  const q = String(req.query.q ?? '').trim()
-  const limit = Math.min(parseInt(String(req.query.limit), 10) || 50, 100)
+  const q = parseSearchQuery(req.query.q)
+  const limit = parseLimit(req.query.limit)
   let rows: GpuRow[]
   if (q) {
     const stmt = db.prepare(
@@ -153,6 +162,10 @@ app.get('/api/gpus', (req, res) => {
 })
 
 const PORT = process.env.PORT || 3001
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`)
-})
+const isDirectRun = !!process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
+
+if (isDirectRun) {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`)
+  })
+}
