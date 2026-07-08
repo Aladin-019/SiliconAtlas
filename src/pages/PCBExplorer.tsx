@@ -9,7 +9,6 @@ import simpleBoardGlbUrl from '../data/pcb_data/simple_motherboard.glb?url'
 import componentBoardGlbUrl from '../data/pcb_data/motherboard__components.glb?url'
 import rogStrixBoardGlbUrl from '../data/pcb_data/rog_strix_x370-f_motherboard.glb?url'
 
-type ExplorerMode = 'board' | 'component-room'
 type NavigationMode = 'first-person' | 'third-person'
 type BoardModelKey = 'simple-motherboard' | 'component-motherboard' | 'rog-strix-x370-f'
 type RotationTuple = [number, number, number]
@@ -236,32 +235,8 @@ function BoardModel({
   )
 }
 
-function ComponentRoom() {
-  return (
-    <>
-      <mesh position={[0, -1.1, 0]} receiveShadow>
-        <boxGeometry args={[12, 0.2, 12]} />
-        <meshStandardMaterial color="#0f1d12" />
-      </mesh>
-      <mesh position={[0, 1.8, -5.9]} receiveShadow>
-        <boxGeometry args={[12, 6, 0.2]} />
-        <meshStandardMaterial color="#26372a" />
-      </mesh>
-      <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.3, 1.3, 1.3]} />
-        <meshStandardMaterial color="#8ee58e" emissive="#3f9d3f" emissiveIntensity={0.45} />
-      </mesh>
-      <mesh position={[0, 2.2, 0]} castShadow>
-        <boxGeometry args={[1.8, 0.25, 0.25]} />
-        <meshStandardMaterial color="#d2f7d2" />
-      </mesh>
-    </>
-  )
-}
-
 function PCBExplorer() {
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null)
-  const [mode, setMode] = useState<ExplorerMode>('board')
   const [navigationMode, setNavigationMode] = useState<NavigationMode>('third-person')
   const [activeModelKey, setActiveModelKey] = useState<BoardModelKey>('simple-motherboard')
 
@@ -291,7 +266,7 @@ function PCBExplorer() {
       <h1>PCB Explorer (3D)</h1>
       <p>
         Walkthrough starter for your explorer idea. GLB is used because it is a single packed asset.
-        Click a component mesh to select it, then enter a conceptual room view.
+        Click a component mesh to select it.
       </p>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -312,20 +287,6 @@ function PCBExplorer() {
             ))}
           </select>
         </label>
-        <button
-          type="button"
-          onClick={() => setMode('board')}
-          disabled={mode === 'board'}
-        >
-          Board view
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('component-room')}
-          disabled={mode === 'component-room'}
-        >
-          Component room
-        </button>
         <button
           type="button"
           onClick={() => setNavigationMode('first-person')}
@@ -355,7 +316,7 @@ function PCBExplorer() {
         }}
       >
         <Canvas
-          key={`${mode}-${navigationMode}-${activeModel.key}`}
+          key={`${navigationMode}-${activeModel.key}`}
           camera={{
             position: cameraPosition,
             fov: 55,
@@ -365,29 +326,23 @@ function PCBExplorer() {
           }}
           shadows
         >
-          <color attach="background" args={[mode === 'component-room' ? '#11180f' : '#153126']} />
+          <color attach="background" args={['#153126']} />
           <ambientLight intensity={ambientIntensity} />
           <directionalLight position={lightPosition} intensity={directionalIntensity} castShadow />
 
-          {mode === 'board' && (
-            <>
-              <mesh position={[0, -1.2, 0]} receiveShadow>
-                <planeGeometry args={[nearGroundSize, nearGroundSize]} />
-                <meshStandardMaterial color="#1f5f35" />
-              </mesh>
-              <mesh position={[0, -1.26, 0]} receiveShadow>
-                <planeGeometry args={[farGroundSize, farGroundSize]} />
-                <meshStandardMaterial color="#14412b" />
-              </mesh>
-              <BoardModel
-                url={activeModel.url}
-                rotation={activeModel.rotation}
-                onSelect={setSelectedComponent}
-              />
-            </>
-          )}
-
-          {mode === 'component-room' && <ComponentRoom />}
+          <mesh position={[0, -1.2, 0]} receiveShadow>
+            <planeGeometry args={[nearGroundSize, nearGroundSize]} />
+            <meshStandardMaterial color="#1f5f35" />
+          </mesh>
+          <mesh position={[0, -1.26, 0]} receiveShadow>
+            <planeGeometry args={[farGroundSize, farGroundSize]} />
+            <meshStandardMaterial color="#14412b" />
+          </mesh>
+          <BoardModel
+            url={activeModel.url}
+            rotation={activeModel.rotation}
+            onSelect={setSelectedComponent}
+          />
 
           {navigationMode === 'third-person' && (
             <OrbitControls

@@ -26,7 +26,6 @@ vi.mock('@react-three/fiber', () => ({
 
 vi.mock('@react-three/drei', () => ({
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  FirstPersonControls: () => null,
   OrbitControls: () => null,
   useGLTF: Object.assign(
     () => ({
@@ -55,37 +54,15 @@ describe('PCBExplorer', () => {
     expect(screen.getByRole('option', { name: /simple motherboard/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /motherboard components/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /rog strix x370-f motherboard/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /board view/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /component room/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /first-person/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /third-person/i })).toBeInTheDocument()
   })
 
-  it('starts in board view', () => {
+  it('starts in third-person navigation mode', () => {
     render(<PCBExplorer />)
 
-    expect(screen.getByRole('button', { name: /board view/i })).toBeDisabled()
-    expect(screen.getByRole('button', { name: /component room/i })).toBeEnabled()
     expect(screen.getByRole('button', { name: /third-person/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /first-person/i })).toBeEnabled()
-  })
-
-  it('switches from board view to component room and back', async () => {
-    const user = userEvent.setup()
-    render(<PCBExplorer />)
-
-    const boardButton = screen.getByRole('button', { name: /board view/i })
-    const roomButton = screen.getByRole('button', { name: /component room/i })
-
-    await user.click(roomButton)
-
-    expect(boardButton).toBeEnabled()
-    expect(roomButton).toBeDisabled()
-
-    await user.click(boardButton)
-
-    expect(boardButton).toBeDisabled()
-    expect(roomButton).toBeEnabled()
   })
 
   it('shows no selected component by default', () => {
