@@ -1,17 +1,199 @@
-import { useMemo, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Center, OrbitControls, useGLTF } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
+import { FrontSide, Vector3 } from 'three'
+import type { Material, Mesh } from 'three'
 
-import boardGlbUrl from '../data/simple_motherboard/simple_motherboard.glb?url'
-import boardGltfUrl from '../data/simple_motherboard/simple_motherboard/scene.gltf?url'
+import simpleBoardGlbUrl from '../data/pcb_data/simple_motherboard.glb?url'
+import componentBoardGlbUrl from '../data/pcb_data/motherboard__components.glb?url'
+import rogStrixBoardGlbUrl from '../data/pcb_data/rog_strix_x370-f_motherboard.glb?url'
 
-type ModelKind = 'glb' | 'gltf'
 type ExplorerMode = 'board' | 'component-room'
+type NavigationMode = 'first-person' | 'third-person'
+type BoardModelKey = 'simple-motherboard' | 'component-motherboard' | 'rog-strix-x370-f'
+type RotationTuple = [number, number, number]
 
-function BoardModel({ url, onSelect }: { url: string; onSelect: (name: string) => void }) {
+type BoardModelOption = {
+  key: BoardModelKey
+  label: string
+  url: string
+  rotation?: RotationTuple
+  ambientIntensity?: number
+  directionalIntensity?: number
+}
+
+const boardModelOptions: BoardModelOption[] = [
+  { key: 'simple-motherboard', label: 'Simple motherboard', url: simpleBoardGlbUrl },
+  {
+    key: 'component-motherboard',
+    label: 'Motherboard components',
+    url: componentBoardGlbUrl,
+    rotation: [-Math.PI / 2, 0, 0],
+    ambientIntensity: 1,
+    directionalIntensity: 2,
+  },
+  {
+    key: 'rog-strix-x370-f',
+    label: 'ROG Strix X370-F motherboard',
+    url: rogStrixBoardGlbUrl,
+    rotation: [-Math.PI / 2, 0, 0],
+    ambientIntensity: 1,
+    directionalIntensity: 2,
+  },
+]
+
+function KeyboardFirstPersonControls() {
+  const { camera } = useThree()
+  const pressedRef = useRef<Set<string>>(new Set())
+  const yawRef = useRef<number>(0)
+  const pitchRef = useRef<number>(0)
+
+  useEffect(() => {
+    camera.rotation.order = 'YXZ'
+    yawRef.current = camera.rotation.y
+    pitchRef.current = camera.rotation.x
+
+    const supportedKeys = new Set(['w', 'a', 's', 'd', 'r', 'f', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'])
+
+    const normalizeKey = (key: string) => (key.length === 1 ? key.toLowerCase() : key)
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const key = normalizeKey(event.key)
+      if (!supportedKeys.has(key)) {
+        return
+      }
+      if (key.startsWith('Arrow')) {
+        event.preventDefault()
+      }
+      pressedRef.current.add(key)
+    }
+
+    const onKeyUp = (event: KeyboardEvent) => {
+      const key = normalizeKey(event.key)
+      if (!supportedKeys.has(key)) {
+        return
+      }
+      pressedRef.current.delete(key)
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+    }
+  }, [])
+
+  useFrame((_, delta) => {
+    const pressed = pressedRef.current
+    if (pressed.size === 0) {
+      return
+    }
+
+    const rotationSpeed = 1.35
+    const movementSpeed = 0.2
+
+    if (pressed.has('ArrowLeft')) {
+      yawRef.current += rotationSpeed * delta
+    }
+    if (pressed.has('ArrowRight')) {
+      yawRef.current -= rotationSpeed * delta
+    }
+    if (pressed.has('ArrowUp')) {
+      pitchRef.current -= rotationSpeed * delta
+    }
+    if (pressed.has('ArrowDown')) {
+      pitchRef.current += rotationSpeed * delta
+    }
+
+    const maxPitch = Math.PI / 2 - 0.05
+    const minPitch = -maxPitch
+    pitchRef.current = Math.max(minPitch, Math.min(maxPitch, pitchRef.current))
+
+    camera.rotation.set(pitchRef.current, yawRef.current, 0)
+
+    const forward = new Vector3()
+    camera.getWorldDirection(forward)
+    forward.y = 0
+    if (forward.lengthSq() > 0) {
+      forward.normalize()
+    }
+
+    const right = new Vector3().crossVectors(forward, camera.up)
+    if (right.lengthSq() > 0) {
+      right.normalize()
+    }
+
+    const movement = new Vector3()
+    if (pressed.has('w')) {
+      movement.add(forward)
+    }
+    if (pressed.has('s')) {
+      movement.sub(forward)
+    }
+    if (pressed.has('d')) {
+      movement.add(right)
+    }
+    if (pressed.has('a')) {
+      movement.sub(right)
+    }
+    if (pressed.has('r')) {
+      movement.y += 1
+    }
+    if (pressed.has('f')) {
+      movement.y -= 1
+    }
+
+    if (movement.lengthSq() > 0) {
+      movement.normalize()
+      camera.position.addScaledVector(movement, movementSpeed * delta)
+    }
+  })
+
+  return null
+}
+
+function BoardModel({
+  url,
+  onSelect,
+  rotation = [0, 0, 0],
+}: {
+  url: string
+  onSelect: (name: string) => void
+  rotation?: RotationTuple
+}) {
   const { scene } = useGLTF(url)
-  const cloned = useMemo(() => scene.clone(true), [scene])
+  const cloned = useMemo(() => {
+    const clone = scene.clone(true)
+
+    // Keep close-up first-person rendering from showing hollow/see-through faces.
+    clone.traverse((object) => {
+      if ((object as Mesh).isMesh) {
+        const mesh = object as Mesh
+        const materialList = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+
+        materialList.forEach((material) => {
+          const typed = material as Material & {
+            transparent?: boolean
+            depthWrite?: boolean
+            depthTest?: boolean
+            side?: number
+            needsUpdate?: boolean
+          }
+
+          typed.transparent = false
+          typed.depthWrite = true
+          typed.depthTest = true
+          typed.side = FrontSide
+          typed.needsUpdate = true
+        })
+      }
+    })
+
+    return clone
+  }, [scene])
 
   const handlePick = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation()
@@ -21,7 +203,7 @@ function BoardModel({ url, onSelect }: { url: string; onSelect: (name: string) =
 
   return (
     <Center>
-      <primitive object={cloned} onPointerDown={handlePick} />
+      <primitive object={cloned} rotation={rotation} onPointerDown={handlePick} />
     </Center>
   )
 }
@@ -50,27 +232,58 @@ function ComponentRoom() {
 }
 
 function PCBExplorer() {
-  const [modelKind, setModelKind] = useState<ModelKind>('glb')
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null)
   const [mode, setMode] = useState<ExplorerMode>('board')
+  const [navigationMode, setNavigationMode] = useState<NavigationMode>('third-person')
+  const [activeModelKey, setActiveModelKey] = useState<BoardModelKey>('simple-motherboard')
 
-  const modelUrl = modelKind === 'glb' ? boardGlbUrl : boardGltfUrl
+  const activeModel = boardModelOptions.find((option) => option.key === activeModelKey) ?? boardModelOptions[0]
+
+  const firstPersonCameraPosition: [number, number, number] = [0, 0.015, -0.08]
+  const thirdPersonCameraPosition: [number, number, number] = [0, 4, 9]
+  const cameraPosition: [number, number, number] =
+    navigationMode === 'first-person' ? firstPersonCameraPosition : thirdPersonCameraPosition
+  const firstPersonCameraRotation: [number, number, number] = [0, -1.5, 0]
+  const thirdPersonCameraRotation: [number, number, number] = [0, 0, 0]
+  const cameraRotation: [number, number, number] =
+    navigationMode === 'first-person' ? firstPersonCameraRotation : thirdPersonCameraRotation
+  const lightPosition: [number, number, number] = [6, 8, 4]
+  const orbitTarget: [number, number, number] = [0, 0.6, 0]
+  const nearGroundSize = 220
+  const farGroundSize = 520
+  const ambientIntensity = activeModel.ambientIntensity ?? 0.6
+  const directionalIntensity = activeModel.directionalIntensity ?? 1.3
+  const helpText =
+    navigationMode === 'first-person'
+      ? 'First-person controls: W/A/S/D to move, R/F to move up/down, and use arrow keys to rotate view. Movement is tuned very slow for precise tiny-on-board exploration.'
+      : 'Third-person controls: drag to orbit, scroll to zoom, and right-click drag to pan.'
 
   return (
     <div>
       <h1>PCB Explorer (3D)</h1>
       <p>
-        Walkthrough starter for your explorer idea. GLB is used by default because it is a single packed asset.
+        Walkthrough starter for your explorer idea. GLB is used because it is a single packed asset.
         Click a component mesh to select it, then enter a conceptual room view.
       </p>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-        <button type="button" onClick={() => setModelKind('glb')} disabled={modelKind === 'glb'}>
-          Use GLB (recommended)
-        </button>
-        <button type="button" onClick={() => setModelKind('gltf')} disabled={modelKind === 'gltf'}>
-          Use GLTF bundle
-        </button>
+        <label htmlFor="pcb-model-select" style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+          Board model
+          <select
+            id="pcb-model-select"
+            value={activeModel.key}
+            onChange={(event) => {
+              setSelectedComponent(null)
+              setActiveModelKey(event.target.value as BoardModelKey)
+            }}
+          >
+            {boardModelOptions.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
           onClick={() => setMode('board')}
@@ -85,7 +298,23 @@ function PCBExplorer() {
         >
           Component room
         </button>
+        <button
+          type="button"
+          onClick={() => setNavigationMode('first-person')}
+          disabled={navigationMode === 'first-person'}
+        >
+          First-person
+        </button>
+        <button
+          type="button"
+          onClick={() => setNavigationMode('third-person')}
+          disabled={navigationMode === 'third-person'}
+        >
+          Third-person
+        </button>
       </div>
+
+      <p style={{ marginTop: 0, marginBottom: 12 }}>{helpText}</p>
 
       <div
         style={{
@@ -97,24 +326,52 @@ function PCBExplorer() {
           minHeight: 460,
         }}
       >
-        <Canvas camera={{ position: [0, 4, 9], fov: 55 }} shadows>
+        <Canvas
+          key={`${mode}-${navigationMode}-${activeModel.key}`}
+          camera={{
+            position: cameraPosition,
+            fov: 55,
+            rotation: cameraRotation,
+            near: navigationMode === 'first-person' ? 0.01 : 0.1,
+            far: 200,
+          }}
+          shadows
+        >
           <color attach="background" args={[mode === 'component-room' ? '#11180f' : '#153126']} />
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[6, 8, 4]} intensity={1.3} castShadow />
+          <ambientLight intensity={ambientIntensity} />
+          <directionalLight position={lightPosition} intensity={directionalIntensity} castShadow />
 
           {mode === 'board' && (
             <>
               <mesh position={[0, -1.2, 0]} receiveShadow>
-                <planeGeometry args={[35, 35]} />
+                <planeGeometry args={[nearGroundSize, nearGroundSize]} />
                 <meshStandardMaterial color="#1f5f35" />
               </mesh>
-              <BoardModel url={modelUrl} onSelect={setSelectedComponent} />
+              <mesh position={[0, -1.26, 0]} receiveShadow>
+                <planeGeometry args={[farGroundSize, farGroundSize]} />
+                <meshStandardMaterial color="#14412b" />
+              </mesh>
+              <BoardModel
+                url={activeModel.url}
+                rotation={activeModel.rotation}
+                onSelect={setSelectedComponent}
+              />
             </>
           )}
 
           {mode === 'component-room' && <ComponentRoom />}
 
-          <OrbitControls makeDefault enableDamping dampingFactor={0.08} />
+          {navigationMode === 'third-person' && (
+            <OrbitControls
+              makeDefault
+              enableDamping
+              dampingFactor={0.08}
+              minDistance={2.5}
+              maxDistance={25}
+              target={orbitTarget}
+            />
+          )}
+          {navigationMode === 'first-person' && <KeyboardFirstPersonControls />}
         </Canvas>
       </div>
 
@@ -125,7 +382,8 @@ function PCBExplorer() {
   )
 }
 
-useGLTF.preload(boardGlbUrl)
-useGLTF.preload(boardGltfUrl)
+useGLTF.preload(simpleBoardGlbUrl)
+useGLTF.preload(componentBoardGlbUrl)
+useGLTF.preload(rogStrixBoardGlbUrl)
 
 export default PCBExplorer
