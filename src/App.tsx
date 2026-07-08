@@ -3,9 +3,10 @@ import HomePage from './pages/HomePage'
 import ParallelCoordinates from './pages/ParallelCoordinates'
 import PCAPlot from './pages/PCAPlot'
 import HardwareLookup from './pages/HardwareLookup'
+import PCBExplorer from './pages/PCBExplorer'
 import './App.css'
 
-type View = 'home' | 'parallel-coordinates' | 'pca' | 'lookup'
+type View = 'home' | 'parallel-coordinates' | 'pca' | 'lookup' | 'pcb-explorer'
 
 function App() {
   const [view, setView] = useState<View>('home')
@@ -51,6 +52,15 @@ function App() {
               Hardware Lookup
             </button>
           </li>
+          <li>
+            <button
+              type="button"
+              className={view === 'pcb-explorer' ? 'active' : ''}
+              onClick={() => setView('pcb-explorer')}
+            >
+              PCB Explorer 3D
+            </button>
+          </li>
         </ul>
       </nav>
       <main className="main-content">
@@ -58,6 +68,7 @@ function App() {
         {view === 'parallel-coordinates' && <ParallelCoordinates />}
         {view === 'pca' && <PCAPlot />}
         {view === 'lookup' && <HardwareLookup />}
+        {view === 'pcb-explorer' && <PCBExplorer />}
       </main>
     </div>
   )
