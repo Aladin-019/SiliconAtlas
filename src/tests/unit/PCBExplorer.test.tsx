@@ -18,6 +18,9 @@ vi.mock('@react-three/fiber', () => ({
         return vector
       },
     },
+    scene: {
+      traverse: () => undefined,
+    },
   }),
 }))
 

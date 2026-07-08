@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Center, OrbitControls, useGLTF } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
-import { FrontSide, Vector3 } from 'three'
+import { FrontSide, Raycaster, Vector3 } from 'three'
 import type { Material, Mesh } from 'three'
 
 import simpleBoardGlbUrl from '../data/pcb_data/simple_motherboard.glb?url'
@@ -44,10 +44,24 @@ const boardModelOptions: BoardModelOption[] = [
 ]
 
 function KeyboardFirstPersonControls() {
-  const { camera } = useThree()
+  const { camera, scene } = useThree()
   const pressedRef = useRef<Set<string>>(new Set())
   const yawRef = useRef<number>(0)
   const pitchRef = useRef<number>(0)
+  const raycasterRef = useRef<Raycaster>(new Raycaster())
+  const collisionDirectionRef = useRef<Vector3>(new Vector3())
+  const movementStepRef = useRef<Vector3>(new Vector3())
+  const collidableRef = useRef<Mesh[]>([])
+
+  useEffect(() => {
+    const collidableMeshes: Mesh[] = []
+    scene.traverse((object) => {
+      if ((object as Mesh).isMesh && (object as Mesh).userData?.collidable === true) {
+        collidableMeshes.push(object as Mesh)
+      }
+    })
+    collidableRef.current = collidableMeshes
+  }, [scene])
 
   useEffect(() => {
     camera.rotation.order = 'YXZ'
@@ -148,7 +162,20 @@ function KeyboardFirstPersonControls() {
 
     if (movement.lengthSq() > 0) {
       movement.normalize()
-      camera.position.addScaledVector(movement, movementSpeed * delta)
+      const movementStep = movementStepRef.current
+      movementStep.copy(movement).multiplyScalar(movementSpeed * delta)
+
+      const collisionDirection = collisionDirectionRef.current
+      collisionDirection.copy(movementStep).normalize()
+
+      const collisionDistance = 0.08
+      raycasterRef.current.set(camera.position, collisionDirection)
+      const hits = raycasterRef.current.intersectObjects(collidableRef.current, true)
+      const blocked = hits.some((hit) => hit.distance <= collisionDistance)
+
+      if (!blocked) {
+        camera.position.add(movementStep)
+      }
     }
   })
 
@@ -172,6 +199,7 @@ function BoardModel({
     clone.traverse((object) => {
       if ((object as Mesh).isMesh) {
         const mesh = object as Mesh
+        mesh.userData.collidable = true
         const materialList = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
 
         materialList.forEach((material) => {
