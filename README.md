@@ -1,6 +1,10 @@
-**SiliconAtlas** — Compare computer hardware with real data and D3 visualizations (parallel coordinates, PCA, etc) across CPUs and GPUs.
+**SiliconAtlas** — Compare computer hardware with real data and interactive visualizations across various computer chips. You can also dive into first person 3D PCB model exploration.
 
-**Stack:** TypeScript, React, Vite, D3. Backend: Express, SQLite (`server/`).
+**Stack:**
+- Frontend: TypeScript, React, Vite, D3, ML-PCA
+   - 3D PCB Explorer: Three.js, `@react-three/fiber`, `@react-three/drei`
+- Backend: Express, SQLite via `better-sqlite3`
+- Testing: Vitest, JSDOM
 
 ## Setup
 
@@ -31,4 +35,18 @@ You need **two processes** (e.g. two terminals):
    ```
    Opens at http://localhost:5173. The app proxies `/api` to the backend.
 
-**Testing:**
+## Testing
+
+Frontend tests use Vitest with JSDOM and Testing Library:
+
+```bash
+npm test
+npm run test:run
+```
+
+Backend tests also use Vitest:
+
+```bash
+cd server && npm test
+cd server && npm run test:run
+```
