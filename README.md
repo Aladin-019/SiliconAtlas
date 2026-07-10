@@ -62,6 +62,9 @@ The following PCB models are used in this project and are licensed under Creativ
 License link for all three models:
 - https://creativecommons.org/licenses/by/4.0/
 
+Change note for attribution compliance:
+- Models are used under CC BY 4.0. Original model files are unmodified; this app applies runtime scene adjustments (orientation, lighting, and rendering settings) for interactive viewing.
+
 ## Educational Use Note
 
 Any room or environment entered from a PCB component is conceptual and for educational purposes only.
