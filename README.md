@@ -50,3 +50,19 @@ Backend tests also use Vitest:
 cd server && npm test
 cd server && npm run test:run
 ```
+
+## PCB Model Attributions
+
+The following PCB models are used in this project and are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0):
+
+- "Simple Motherboard" by Rizki Achmad: https://skfb.ly/puYDn
+- "MotherBoard + Components" by Daniel Cardona: https://skfb.ly/6RDsX
+- "Rog Strix x370-f Motherboard" by MUSHROOM_BUILDS: https://skfb.ly/6ZqAY
+
+License link for all three models:
+- https://creativecommons.org/licenses/by/4.0/
+
+## Educational Use Note
+
+Any room or environment entered from a PCB component is conceptual and for educational purposes only.
+It is not guaranteed to represent the real-world physical layout, spacing, or architecture of the actual hardware component.
